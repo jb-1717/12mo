@@ -54,7 +54,7 @@
             font-weight: bold;
             color: #475569;
             margin: 0 1rem;
-            position: relative; /* Para posicionar el texto de carga */
+            position: relative; /* Para posicionar el texto de carga y partículas */
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
             transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.3s ease;
             overflow: hidden; /* Asegura que las partículas se mantengan dentro */
@@ -101,10 +101,12 @@
         }
         .ground-line {
             width: 4px;
-            height: 40px;
+            height: 40px; /* This is the main vertical line height */
             background-color: #475569;
-            margin-top: 10px;
-            position: relative;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-2px); /* Center it */
+            transition: top 0.5s ease-in-out; /* Smooth movement for ground connection */
         }
         .ground-line::before, .ground-line::after {
             content: '';
@@ -112,15 +114,17 @@
             background-color: #475569;
         }
         .ground-line::before {
+            /* This is the first horizontal bar of the ground symbol */
             width: 12px;
             height: 4px;
-            top: 40px;
+            top: 100%; /* Position at the end of the 40px vertical line */
             left: -4px;
         }
         .ground-line::after {
+            /* This is the second horizontal bar of the ground symbol */
             width: 20px;
             height: 4px;
-            top: 48px;
+            top: calc(100% + 8px); /* Position below the first bar, 8px gap */
             left: -8px;
         }
         .rod {
@@ -146,6 +150,14 @@
         .rod .charge-indicator {
             font-size: 1.5rem;
         }
+        /* Style for horizontal rod */
+        .rod-horizontal {
+            width: 60px; /* Half of 120px */
+            height: 10px; /* Half of 20px */
+            /* No transform here, handled by JS to combine with translateY */
+            border-radius: 0.5rem;
+            flex-direction: row; /* Align content horizontally when rotated */
+        }
         .wall {
             width: 150px;
             height: 100px;
@@ -161,6 +173,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
+            transition: left 0.5s ease, top 0.5s ease;
         }
         .wall-charge-positive { background-color: #fca5a5; }
         .wall-charge-negative { background-color: #bfdbfe; }
@@ -214,6 +227,105 @@
             font-size: 1.1rem;
             margin-top: 1rem;
         }
+        /* New style for vertical alignment of spheres (general use) */
+        .vertical-sphere-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px; /* Adjust height as needed to give space for movement */
+            position: relative; /* For absolute positioning of spheres within */
+            width: 100%;
+        }
+        .vertical-sphere-container .sphere {
+            position: absolute;
+            transition: transform 1s ease-in-out; /* Smooth vertical movement */
+        }
+        .vertical-sphere-container .sphere#chargeSimulationSphereTop {
+            top: 30px; /* Initial top position */
+        }
+        .vertical-sphere-container .sphere#chargeSimulationSphereBottom {
+            bottom: 30px; /* Initial bottom position */
+        }
+        /* Specific style for vertical alignment in Conduction simulation */
+        .vertical-sphere-conduction-container {
+            display: flex;
+            flex-direction: column; /* Align vertically */
+            align-items: center; /* Center horizontally */
+            justify-content: center; /* Center vertically within its own space */
+            height: 250px; /* Give it enough space for spheres to move */
+            position: relative; /* For absolute positioning of children */
+            width: 100%;
+        }
+        .vertical-sphere-conduction-container .sphere {
+            position: absolute; /* Allow precise positioning */
+            transition: transform 1s ease-in-out; /* Smooth vertical movement */
+        }
+        .vertical-sphere-conduction-container .sphere#conductionSphereTop {
+            top: 30px; /* Initial top position */
+        }
+        .vertical-sphere-conduction-container .sphere#conductionSphereBottom {
+            bottom: 30px; /* Initial bottom position */
+        }
+
+        /* NEW: Styles for vertical induction simulation */
+        .vertical-induction-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Center the overall setup vertically */
+            height: 250px; /* Give enough space for vertical movement */
+            position: relative;
+            width: 100%;
+        }
+
+        .vertical-induction-container .rod {
+            position: absolute;
+            top: 0px; /* Start rod at the top of its container */
+            transform-origin: center center; /* Ensure rotation around its center */
+            transition: transform 0.5s ease-in-out, top 0.5s ease-in-out; /* Add top to transition */
+            margin: 0; /* Remove default margins */
+        }
+
+        .vertical-induction-container .sphere {
+            position: absolute;
+            top: calc(50% - 40px); /* Center sphere vertically initially, considering its height */
+            margin: 0; /* Remove default margins */
+        }
+
+        .vertical-induction-container .ground-line {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-2px); /* Center it horizontally under the sphere */
+            transition: top 0.5s ease-in-out; /* Smooth movement for ground connection */
+        }
+
+        /* NEW: Styles for polarization simulation layout */
+        .polarization-container {
+            position: relative;
+            width: 100%;
+            height: 250px; /* Ensure enough space for rod above wall */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Center content vertically initially */
+            overflow: hidden;
+        }
+
+        .polarization-container #polarizationRod {
+            position: absolute;
+            /* Default position for rod when hidden, above the wall */
+            top: -50px; /* Adjust as needed for off-screen hidden state */
+            transform: translateX(-50%); /* Centered horizontally */
+            transition: top 0.5s ease-in-out; /* Only transition top, transform handled directly */
+        }
+
+        .polarization-container #polarizationWall {
+            position: absolute;
+            top: 50%; /* Center vertically within the container */
+            transform: translateY(-50%); /* Adjust for its own height */
+        }
+
+
         /* Media queries para responsividad */
         @media (max-width: 768px) {
             .container {
@@ -237,6 +349,10 @@
                 width: 15px;
                 height: 100px;
             }
+            .rod-horizontal { /* Adjust horizontal rod size for mobile */
+                width: 100px;
+                height: 15px;
+            }
             .wall {
                 width: 120px;
                 height: 80px;
@@ -244,6 +360,26 @@
             .flex-center {
                 flex-direction: column;
                 gap: 1rem;
+            }
+            .vertical-sphere-container, .vertical-sphere-conduction-container, .vertical-induction-container, .polarization-container {
+                height: 200px; /* Smaller height for mobile */
+            }
+            .vertical-sphere-container .sphere#chargeSimulationSphereTop,
+            .vertical-sphere-conduction-container .sphere#conductionSphereTop {
+                top: 20px;
+            }
+            .vertical-sphere-container .sphere#chargeSimulationSphereBottom,
+            .vertical-sphere-conduction-container .sphere#conductionSphereBottom {
+                bottom: 20px;
+            }
+            .vertical-induction-container .rod { /* Adjusted rod top for smaller height */
+                top: 0px;
+            }
+            .vertical-induction-container .sphere {
+                top: calc(50% - 30px); /* Adjusted sphere top for smaller height and smaller sphere */
+            }
+            .polarization-container #polarizationRod {
+                 top: -40px; /* Adjust hidden position for mobile */
             }
         }
     </style>
@@ -288,9 +424,48 @@
             </p>
         </section>
 
+        <!-- NUEVA SECCIÓN: Simulación 1: Interacción Vertical de Cargas -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">3. Simulación: Interacción Vertical de Cargas (Atracción/Repulsión)</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                En esta simulación, puedes observar cómo las cargas eléctricas interactúan cuando se colocan una encima de la otra. Las cargas opuestas se atraen, mientras que las cargas iguales se repelen.
+            </p>
+
+            <div class="interactive-area">
+                <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Atracción y Repulsión Vertical</p>
+                <div class="vertical-sphere-container">
+                    <div id="chargeSimulationSphereTop" class="sphere"></div>
+                    <div id="chargeSimulationSphereBottom" class="sphere"></div>
+                </div>
+                <div class="flex flex-col sm:flex-row mt-6 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label for="topChargeSelect" class="font-semibold text-gray-700">Esfera Superior:</label>
+                        <select id="topChargeSelect" class="p-2 border rounded-md">
+                            <option value="neutral">Neutro</option>
+                            <option value="positive">Positivo (+)</option>
+                            <option value="negative">Negativo (-)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label for="bottomChargeSelect" class="font-semibold text-gray-700">Esfera Inferior:</label>
+                        <select id="bottomChargeSelect" class="p-2 border rounded-md">
+                            <option value="neutral">Neutro</option>
+                            <option value="positive">Positivo (+)</option>
+                            <option value="negative">Negativo (-)</option>
+                        </select>
+                    </div>
+                    <button id="chargeSimulationMoveBtn" class="btn">Simular Interacción</button>
+                    <button id="chargeSimulationResetBtn" class="btn reset-btn">Reiniciar Simulación</button>
+                </div>
+                <p id="chargeSimulationInfo" class="info-message mt-4 w-full">
+                    Selecciona las cargas para ambas esferas y haz clic en "Simular Interacción".
+                </p>
+            </div>
+        </section>
+
         <!-- Concepto 2: Carga por Conducción -->
         <section class="concept-section">
-            <h2 class="text-3xl font-bold text-indigo-600 mb-4">3. Carga por Conducción</h2>
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">4. Carga por Conducción</h2>
             <p class="text-lg leading-relaxed mb-4">
                 La carga por conducción es un proceso en el que un objeto cargado transfiere carga a un objeto neutro (o con carga diferente) mediante <strong>contacto directo</strong>. Al tocarse, las cargas libres (generalmente electrones en los metales) se redistribuyen entre ambos objetos hasta alcanzar un equilibrio.
             </p>
@@ -300,24 +475,24 @@
 
             <div class="interactive-area">
                 <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Carga por Conducción</p>
-                <div class="flex-center w-full">
-                    <div id="conductionSphere1" class="sphere"></div>
-                    <div id="conductionSphere2" class="sphere"></div>
+                <div class="vertical-sphere-conduction-container">
+                    <div id="conductionSphereTop" class="sphere"></div>
+                    <div id="conductionSphereBottom" class="sphere"></div>
                 </div>
                 <div class="flex flex-col sm:flex-row mt-6 gap-4">
-                    <button id="chargeConductionBtn" class="btn">Cargar Esfera 1 Negativamente</button>
+                    <button id="chargeConductionBtn" class="btn">Cargar Esfera Superior Negativamente</button>
                     <button id="touchSpheresBtn" class="btn">Hacer Contacto</button>
                     <button id="resetConductionBtn" class="btn reset-btn">Reiniciar</button>
                 </div>
                 <p id="conductionInfo" class="info-message mt-4 w-full">
-                    Haz clic en "Cargar Esfera 1 Negativamente" y luego en "Hacer Contacto" para ver la conducción.
+                    Haz clic en "Cargar Esfera Superior Negativamente" y luego en "Hacer Contacto" para ver la conducción.
                 </p>
             </div>
         </section>
 
         <!-- Concepto 3: Carga por Inducción -->
         <section class="concept-section">
-            <h2 class="text-3xl font-bold text-indigo-600 mb-4">4. Carga por Inducción</h2>
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">5. Carga por Inducción</h2>
             <p class="text-lg leading-relaxed mb-4">
                 La carga por inducción permite cargar un objeto conductor <strong>sin necesidad de contacto directo</strong> con el objeto cargado. El proceso consta de los siguientes pasos:
             </p>
@@ -334,12 +509,10 @@
 
             <div class="interactive-area">
                 <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Carga por Inducción</p>
-                <div class="flex-center w-full">
+                <div class="vertical-induction-container">
                     <div id="inductionRod" class="rod hidden"></div>
-                    <div class="flex flex-col items-center">
-                        <div id="inductionSphere" class="sphere"></div>
-                        <div id="groundConnection" class="ground-line hidden"></div>
-                    </div>
+                    <div id="inductionSphere" class="sphere"></div>
+                    <div id="groundConnection" class="ground-line hidden"></div>
                 </div>
                 <div class="flex flex-col sm:flex-row mt-6 gap-4">
                     <button id="bringRodBtn" class="btn">Acercar Barra Negativa</button>
@@ -356,7 +529,7 @@
 
         <!-- Concepto 4: Polarización -->
         <section class="concept-section">
-            <h2 class="text-3xl font-bold text-indigo-600 mb-4">5. Polarización</h2>
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">6. Polarización</h2>
             <p class="text-lg leading-relaxed mb-4">
                 La polarización es un fenómeno que ocurre en <strong>materiales aislantes</strong> (dieléctricos) cuando se les acerca un objeto cargado. A diferencia de los conductores, donde las cargas pueden moverse libremente, en los aislantes los electrones están fuertemente unidos a sus átomos o moléculas y no pueden desplazarse de un lugar a otro.
             </p>
@@ -372,24 +545,25 @@
 
             <div class="interactive-area">
                 <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Polarización</p>
-                <div class="flex-center w-full">
-                    <div id="polarizationRod" class="rod hidden"></div>
+                <!-- Container for rod and wall, ensures relative positioning and centering -->
+                <div class="polarization-container">
+                    <div id="polarizationRod" class="rod hidden rod-horizontal"></div>
                     <div id="polarizationWall" class="wall"></div>
                 </div>
                 <div class="flex flex-col sm:flex-row mt-6 gap-4">
-                    <button id="approachRodBtn" class="btn">Acercar Barra Negativa a la Pared</button>
+                    <button id="approachRodBtn" class="btn">Acercar barra</button>
                     <button id="retractRodBtn" class="btn">Remover Barra</button>
                     <button id="resetPolarizationBtn" class="btn reset-btn">Reiniciar</button>
                 </div>
                 <p id="polarizationInfo" class="info-message mt-4 w-full">
-                    Acerca la barra cargada a la pared para observar la polarización.
+                    Acerca la barra cargada al rectángulo para observar la polarización.
                 </p>
             </div>
         </section>
 
         <!-- Sección de Ejemplo Resuelto -->
         <section class="concept-section">
-            <h2 class="text-3xl font-bold text-indigo-600 mb-4">6. Ejemplo Resuelto: Cálculo de Carga Neta</h2>
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">7. Ejemplo Resuelto: Cálculo de Carga Neta</h2>
             <p class="text-lg leading-relaxed mb-4">
                 A menudo, necesitamos calcular la carga total (o neta) de un objeto que ha ganado o perdido electrones. Dado que la carga es cuántica (existe en paquetes discretos), la carga total de un objeto es siempre un múltiplo entero de la carga elemental ($e$).
             </p>
@@ -477,15 +651,24 @@
          */
         function setSphereCharge(sphereElement, chargeType) {
             sphereElement.classList.remove('sphere-charged-positive', 'sphere-charged-negative');
-            sphereElement.innerHTML = ''; // Clear any existing charge indicator
+            // Clear only the charge indicator text, particles are handled by clearAllChargeParticles
+            sphereElement.querySelector('.charge-indicator')?.remove(); 
+            
+            let indicator = document.createElement('span');
+            indicator.classList.add('charge-indicator');
+
             if (chargeType === 'positive') {
                 sphereElement.classList.add('sphere-charged-positive');
-                sphereElement.innerHTML = '<span class="charge-indicator">+</span>';
+                indicator.textContent = '+';
             } else if (chargeType === 'negative') {
                 sphereElement.classList.add('sphere-charged-negative');
-                sphereElement.innerHTML = '<span class="charge-indicator">-</span>';
+                indicator.textContent = '-';
+            } else { // neutral
+                // No charge indicator text for neutral
             }
-            // For neutral, just ensure classes are removed and innerHTML is empty
+            if (chargeType !== 'neutral') {
+                sphereElement.appendChild(indicator);
+            }
         }
 
         /**
@@ -506,15 +689,15 @@
          * @param {string} type - 'positive' or 'negative' to apply corresponding styles.
          */
         function addChargeParticlesRobust(element, num, type) {
-            const elementWidth = element.clientWidth;
-            const elementHeight = element.clientHeight;
+            const elementRect = element.getBoundingClientRect(); // Get actual dimensions
+            const elementWidth = elementRect.width;
+            const elementHeight = elementRect.height;
 
-            // Use fixed dimensions if element.clientWidth/Height are 0 (e.g., before layout)
+            // Use fixed dimensions as fallback, in case element is hidden or not yet rendered
             const fallbackWidth = 80; // sphere width (based on CSS)
             const fallbackHeight = 80; // sphere height (based on CSS)
             const currentWidth = elementWidth > 0 ? elementWidth : fallbackWidth;
             const currentHeight = elementHeight > 0 ? elementHeight : fallbackHeight;
-
 
             const particleSize = 15; // Fixed size based on CSS
             const padding = 5; // To keep particles away from the very edge
@@ -537,7 +720,7 @@
         }
 
         /**
-         * Repositions charge particles within a sphere to simulate polarization.
+         * Repositions charge particles within a sphere to simulate horizontal polarization.
          * Particles of opposite charge move towards the rod, same charge move away.
          * @param {HTMLElement} sphereElement - The sphere element containing particles.
          * @param {string} positiveType - The class name for positive particles (e.g., 'positive').
@@ -548,14 +731,14 @@
             const positiveParticles = sphereElement.querySelectorAll(`.charge-particle.${positiveType}`);
             const negativeParticles = sphereElement.querySelectorAll(`.charge-particle.${negativeType}`);
 
-            const sphereSize = 80; // Fixed size based on CSS (adjust if your sphere size changes)
+            const sphereRect = sphereElement.getBoundingClientRect();
+            const sphereSize = sphereRect.width > 0 ? sphereRect.width : 80; // Use actual or fallback
             const particleSize = 15;
             const padding = 5;
 
             const innerHalfWidth = (sphereSize / 2) - padding - (particleSize / 2);
             const innerHeight = sphereSize - 2 * padding - particleSize;
 
-            // Define target ranges for particle movement based on rod charge
             let targetXMinPos, targetXMaxPos;
             let targetXMinNeg, targetXMaxNeg;
 
@@ -566,10 +749,9 @@
                 // Negative particles move to the right half (repelled by negative rod)
                 targetXMinNeg = sphereSize / 2 + padding;
                 targetXMaxNeg = sphereSize - padding - particleSize;
-            } else {
-                // If rod were positive, logic would flip (not implemented in this simulation)
-                // For now, if rod is not negative, assume neutral or no specific polarization
-                targetXMinPos = padding; // Default to full sphere for safety
+            } else { // Neutral or positive rod (though simulation only uses negative)
+                // Default to full sphere if no specific polarization direction
+                targetXMinPos = padding;
                 targetXMaxPos = sphereSize - padding - particleSize;
                 targetXMinNeg = padding;
                 targetXMaxNeg = sphereSize - padding - particleSize;
@@ -591,39 +773,271 @@
         }
 
 
+        /**
+         * Repositions charge particles within a sphere to simulate vertical polarization.
+         * Particles of opposite charge move towards the top (near rod), same charge move away (bottom).
+         * @param {HTMLElement} sphereElement - The sphere element containing particles.
+         * @param {string} positiveType - The class name for positive particles (e.g., 'positive').
+         * @param {string} negativeType - The class name for negative particles (e.g., 'negative').
+         * @param {string} rodChargeType - The charge of the inducing rod ('negative' assumed for this sim).
+         */
+        function repositionParticlesForVerticalPolarization(sphereElement, positiveType, negativeType, rodChargeType) {
+            const positiveParticles = sphereElement.querySelectorAll(`.charge-particle.${positiveType}`);
+            const negativeParticles = sphereElement.querySelectorAll(`.charge-particle.${negativeType}`);
+
+            const sphereRect = sphereElement.getBoundingClientRect();
+            const sphereSize = sphereRect.width > 0 ? sphereRect.width : 80;
+            const particleSize = 15;
+            const padding = 5;
+
+            const innerWidth = sphereSize - 2 * padding - particleSize;
+            const innerHalfHeight = (sphereSize / 2) - padding - (particleSize / 2);
+
+            let targetYMinPos, targetYMaxPos;
+            let targetYMinNeg, targetYMaxNeg;
+
+            if (rodChargeType === 'negative') {
+                // Positive particles move to the top half (attracted to negative rod above)
+                targetYMinPos = padding;
+                targetYMaxPos = innerHalfHeight;
+                // Negative particles move to the bottom half (repelled by negative rod above)
+                targetYMinNeg = sphereSize / 2 + padding;
+                targetYMaxNeg = sphereSize - padding - particleSize;
+            } else {
+                // Default to full sphere if no specific polarization direction (shouldn't happen with negative rod only)
+                targetYMinPos = padding;
+                targetYMaxPos = sphereSize - padding - particleSize;
+                targetYMinNeg = padding;
+                targetYMaxNeg = sphereSize - padding - particleSize;
+            }
+
+            positiveParticles.forEach(p => {
+                const x = Math.random() * innerWidth + padding;
+                const y = Math.random() * (targetYMaxPos - targetYMinPos) + targetYMinPos;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+            });
+
+            negativeParticles.forEach(p => {
+                const x = Math.random() * innerWidth + padding;
+                const y = Math.random() * (targetYMaxNeg - targetYMinNeg) + targetYMinNeg;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+            });
+        }
+
+
+        /**
+         * Repositions charges within a wall element to simulate vertical polarization.
+         * Positive charges move towards the top (near rod), negative charges move towards the bottom.
+         * @param {HTMLElement} wallElement - The wall DOM element.
+         * @param {string} positiveType - Class name for positive particles.
+         * @param {string} negativeType - Class name for negative particles.
+         * @param {string} rodChargeType - The charge of the inducing rod ('negative' expected).
+         */
+        function repositionWallParticlesForVerticalPolarization(wallElement, positiveType, negativeType, rodChargeType) {
+            const positiveWallParticles = wallElement.querySelectorAll(`.${positiveType}`);
+            const negativeWallParticles = wallElement.querySelectorAll(`.${negativeType}`);
+
+            const wallRect = wallElement.getBoundingClientRect();
+            const wallWidth = wallRect.width > 0 ? wallRect.width : 150; // Use actual or fallback
+            const wallHeight = wallRect.height > 0 ? wallRect.height : 100; // Use actual or fallback
+
+            const particleSize = 10;
+            const padding = 5;
+
+            const innerWidth = wallWidth - 2 * padding - particleSize;
+            const innerHalfHeight = (wallHeight / 2) - padding - (particleSize / 2);
+
+            let targetYMinPos, targetYMaxPos;
+            let targetYMinNeg, targetYMaxNeg;
+
+            if (rodChargeType === 'negative') {
+                // Positive charges attracted to top (near negative rod)
+                targetYMinPos = padding;
+                targetYMaxPos = innerHalfHeight;
+                // Negative charges repelled to bottom
+                targetYMinNeg = wallHeight / 2 + padding;
+                targetYMaxNeg = wallHeight - padding - particleSize;
+            } else {
+                // Default to random distribution if not specifically negative rod
+                targetYMinPos = padding;
+                targetYMaxPos = wallHeight - padding - particleSize;
+                targetYMinNeg = padding;
+                targetYMaxNeg = wallHeight - padding - particleSize;
+            }
+
+            positiveWallParticles.forEach(p => {
+                const x = Math.random() * innerWidth + padding;
+                const y = Math.random() * (targetYMaxPos - targetYMinPos) + targetYMinPos;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+            });
+
+            negativeWallParticles.forEach(n => {
+                const x = Math.random() * innerWidth + padding;
+                const y = Math.random() * (targetYMaxNeg - targetYMinNeg) + targetYMinNeg;
+                n.style.left = `${x}px`;
+                n.style.top = `${y}px`;
+            });
+        }
+
+
+        // --- NEW: Vertical Charge Interaction Simulation (Atracción/Repulsión) ---
+        const chargeSimulationSphereTop = document.getElementById('chargeSimulationSphereTop');
+        const chargeSimulationSphereBottom = document.getElementById('chargeSimulationSphereBottom');
+        const topChargeSelect = document.getElementById('topChargeSelect');
+        const bottomChargeSelect = document.getElementById('bottomChargeSelect');
+        const chargeSimulationMoveBtn = document.getElementById('chargeSimulationMoveBtn');
+        const chargeSimulationResetBtn = document.getElementById('chargeSimulationResetBtn');
+        const chargeSimulationInfo = document.getElementById('chargeSimulationInfo');
+
+        let currentTopCharge = 'neutral';
+        let currentBottomCharge = 'neutral';
+
+        /**
+         * Initializes or resets the vertical charge simulation.
+         */
+        function resetChargeSimulation() {
+            currentTopCharge = 'neutral';
+            currentBottomCharge = 'neutral';
+            topChargeSelect.value = 'neutral';
+            bottomChargeSelect.value = 'neutral';
+
+            setSphereCharge(chargeSimulationSphereTop, 'neutral');
+            setSphereCharge(chargeSimulationSphereBottom, 'neutral');
+            clearAllChargeParticles(chargeSimulationSphereTop);
+            clearAllChargeParticles(chargeSimulationSphereBottom);
+
+            // Reset positions
+            chargeSimulationSphereTop.style.transform = `translateY(0px)`;
+            chargeSimulationSphereBottom.style.transform = `translateY(0px)`;
+
+            chargeSimulationMoveBtn.disabled = false;
+            chargeSimulationInfo.textContent = 'Selecciona las cargas para ambas esferas y haz clic en "Simular Interacción".';
+        }
+
+        /**
+         * Updates the visual state of a sphere based on the selected charge.
+         * @param {HTMLElement} sphereElement - The sphere DOM element.
+         * @param {string} chargeType - 'positive', 'negative', or 'neutral'.
+         */
+        function updateSphereVisual(sphereElement, chargeType) {
+            clearAllChargeParticles(sphereElement); // Clear previous particles
+            setSphereCharge(sphereElement, chargeType); // Set color and +/- indicator
+
+            if (chargeType === 'positive') {
+                addChargeParticlesRobust(sphereElement, 8, 'positive');
+            } else if (chargeType === 'negative') {
+                addChargeParticlesRobust(sphereElement, 8, 'negative');
+            } else {
+                // For neutral, add equal positive and negative particles
+                addChargeParticlesRobust(sphereElement, 4, 'positive');
+                addChargeParticlesRobust(sphereElement, 4, 'negative');
+            }
+        }
+
+        /**
+         * Performs the vertical interaction animation based on selected charges.
+         */
+        chargeSimulationMoveBtn.addEventListener('click', () => {
+            currentTopCharge = topChargeSelect.value;
+            currentBottomCharge = bottomChargeSelect.value;
+
+            updateSphereVisual(chargeSimulationSphereTop, currentTopCharge);
+            updateSphereVisual(chargeSimulationSphereBottom, currentBottomCharge);
+
+            let message = '';
+            let topMove = 0; // translateY value in pixels
+            let bottomMove = 0; // translateY value in pixels
+
+            const interactionDistance = 40; // Pixels to move closer/further
+
+            // Logic for attraction/repulsion
+            if (currentTopCharge === 'neutral' || currentBottomCharge === 'neutral') {
+                message = 'Las esferas neutras o con una carga neutra no interactúan significativamente.';
+                topMove = 0;
+                bottomMove = 0;
+            } else if (currentTopCharge !== currentBottomCharge) {
+                // Opposite charges: attract
+                message = '¡Cargas opuestas se atraen!';
+                topMove = interactionDistance / 2; // Move down
+                bottomMove = -interactionDistance / 2; // Move up
+            } else {
+                // Same charges: repel
+                message = '¡Cargas iguales se repelen!';
+                topMove = -interactionDistance / 2; // Move up
+                bottomMove = interactionDistance / 2; // Move down
+            }
+
+            chargeSimulationSphereTop.style.transform = `translateY(${topMove}px)`;
+            chargeSimulationSphereBottom.style.transform = `translateY(${bottomMove}px)`;
+            chargeSimulationInfo.textContent = message;
+        });
+
+        // Event listeners for select changes (update visuals instantly)
+        topChargeSelect.addEventListener('change', () => {
+            currentTopCharge = topChargeSelect.value;
+            updateSphereVisual(chargeSimulationSphereTop, currentTopCharge);
+            chargeSimulationInfo.textContent = 'Selecciona las cargas para ambas esferas y haz clic en "Simular Interacción".';
+            // Reset positions if interaction was already simulated
+            chargeSimulationSphereTop.style.transform = `translateY(0px)`;
+            chargeSimulationSphereBottom.style.transform = `translateY(0px)`;
+        });
+
+        bottomChargeSelect.addEventListener('change', () => {
+            currentBottomCharge = bottomChargeSelect.value;
+            updateSphereVisual(chargeSimulationSphereBottom, currentBottomCharge);
+            chargeSimulationInfo.textContent = 'Selecciona las cargas para ambas esferas y haz clic en "Simular Interacción".';
+            // Reset positions if interaction was already simulated
+            chargeSimulationSphereTop.style.transform = `translateY(0px)`;
+            chargeSimulationSphereBottom.style.transform = `translateY(0px)`;
+        });
+
+        chargeSimulationResetBtn.addEventListener('click', resetChargeSimulation);
+
         // --- Conduction Simulation ---
-        const conductionSphere1 = document.getElementById('conductionSphere1');
-        const conductionSphere2 = document.getElementById('conductionSphere2');
+        // Changed IDs to match vertical layout
+        const conductionSphereTop = document.getElementById('conductionSphereTop');
+        const conductionSphereBottom = document.getElementById('conductionSphereBottom');
         const chargeConductionBtn = document.getElementById('chargeConductionBtn');
         const touchSpheresBtn = document.getElementById('touchSpheresBtn');
         const resetConductionBtn = document.getElementById('resetConductionBtn');
         const conductionInfo = document.getElementById('conductionInfo');
 
-        let conductionState = 0; // 0: initial, 1: sphere 1 charged, 2: in contact
+        let conductionState = 0; // 0: initial, 1: sphere top charged, 2: in contact
 
         /**
          * Resets the conduction simulation to its initial state.
          */
         function resetConduction() {
-            conductionSphere1.className = 'sphere';
-            conductionSphere2.className = 'sphere';
-            conductionSphere1.innerHTML = '';
-            conductionSphere2.innerHTML = '';
-            conductionSphere1.style.transform = 'translateX(0px)';
-            conductionSphere2.style.transform = 'translateX(0px)';
-            clearAllChargeParticles(conductionSphere1);
-            clearAllChargeParticles(conductionSphere2);
+            conductionSphereTop.className = 'sphere';
+            conductionSphereBottom.className = 'sphere';
+            conductionSphereTop.querySelector('.charge-indicator')?.remove(); // Clear indicator
+            conductionSphereBottom.querySelector('.charge-indicator')?.remove(); // Clear indicator
+            // Reset vertical positions
+            conductionSphereTop.style.transform = 'translateY(0px)';
+            conductionSphereBottom.style.transform = 'translateY(0px)';
+            clearAllChargeParticles(conductionSphereTop);
+            clearAllChargeParticles(conductionSphereBottom);
+            // Add initial neutral particles
+            addChargeParticlesRobust(conductionSphereTop, 4, 'positive');
+            addChargeParticlesRobust(conductionSphereTop, 4, 'negative');
+            addChargeParticlesRobust(conductionSphereBottom, 4, 'positive');
+            addChargeParticlesRobust(conductionSphereBottom, 4, 'negative');
+
             chargeConductionBtn.disabled = false;
             touchSpheresBtn.disabled = true;
-            conductionInfo.textContent = 'Haz clic en "Cargar Esfera 1 Negativamente" y luego en "Hacer Contacto" para ver la conducción.';
+            conductionInfo.textContent = 'Haz clic en "Cargar Esfera Superior Negativamente" y luego en "Hacer Contacto" para ver la conducción.';
             conductionState = 0;
         }
 
         chargeConductionBtn.addEventListener('click', () => {
             if (conductionState === 0) {
-                setSphereCharge(conductionSphere1, 'negative');
-                addChargeParticlesRobust(conductionSphere1, 8, 'negative');
-                conductionInfo.textContent = 'Esfera 1 cargada negativamente. Ahora haz clic en "Hacer Contacto".';
+                setSphereCharge(conductionSphereTop, 'negative');
+                clearAllChargeParticles(conductionSphereTop); // Clear neutral particles
+                addChargeParticlesRobust(conductionSphereTop, 8, 'negative'); // Show excess negative
+                conductionInfo.textContent = 'Esfera superior cargada negativamente. Ahora haz clic en "Hacer Contacto".';
                 chargeConductionBtn.disabled = true;
                 touchSpheresBtn.disabled = false;
                 conductionState = 1;
@@ -632,26 +1046,27 @@
 
         touchSpheresBtn.addEventListener('click', () => {
             if (conductionState === 1) {
-                conductionSphere1.style.transition = 'transform 1s ease';
-                conductionSphere2.style.transition = 'transform 1s ease';
-                conductionSphere1.style.transform = 'translateX(35px)';
-                conductionSphere2.style.transform = 'translateX(-35px)';
+                conductionSphereTop.style.transition = 'transform 1s ease';
+                conductionSphereBottom.style.transition = 'transform 1s ease';
+                // Move vertically to meet
+                conductionSphereTop.style.transform = 'translateY(35px)'; // Move down
+                conductionSphereBottom.style.transform = 'translateY(-35px)'; // Move up
 
                 setTimeout(() => {
-                    setSphereCharge(conductionSphere1, 'negative');
-                    setSphereCharge(conductionSphere2, 'negative');
-                    clearAllChargeParticles(conductionSphere1);
-                    clearAllChargeParticles(conductionSphere2);
-                    addChargeParticlesRobust(conductionSphere1, 4, 'negative'); // Distribute particles
-                    addChargeParticlesRobust(conductionSphere2, 4, 'negative'); // Distribute particles
+                    setSphereCharge(conductionSphereTop, 'negative');
+                    setSphereCharge(conductionSphereBottom, 'negative');
+                    clearAllChargeParticles(conductionSphereTop);
+                    clearAllChargeParticles(conductionSphereBottom);
+                    addChargeParticlesRobust(conductionSphereTop, 4, 'negative'); // Distribute particles
+                    addChargeParticlesRobust(conductionSphereBottom, 4, 'negative'); // Distribute particles
                     conductionInfo.textContent = 'Las esferas han hecho contacto directo y la carga se ha distribuido. Ambas tienen carga negativa.';
                     touchSpheresBtn.disabled = true;
                     conductionState = 2;
                     // Reset transitions for future interactions
-                    conductionSphere1.style.transition = '';
-                    conductionSphere2.style.transition = '';
-                    conductionSphere1.style.transform = 'translateX(35px)';
-                    conductionSphere2.style.transform = 'translateX(-35px)';
+                    conductionSphereTop.style.transition = '';
+                    conductionSphereBottom.style.transition = '';
+                    conductionSphereTop.style.transform = 'translateY(35px)'; // Maintain contact position
+                    conductionSphereBottom.style.transform = 'translateY(-35px)'; // Maintain contact position
                 }, 1000);
             }
         });
@@ -666,7 +1081,7 @@
         const bringRodBtn = document.getElementById('bringRodBtn');
         const groundSphereBtn = document.getElementById('groundSphereBtn');
         const removeGroundBtn = document.getElementById('removeGroundBtn');
-        const removeRodBtn = document.getElementById('removeRodBtn');
+        const removeRodBtn = document.getElementById('removeRodBtn'); // Corrected ID retrieval
         const resetInductionBtn = document.getElementById('resetInductionBtn');
         const inductionInfo = document.getElementById('inductionInfo');
 
@@ -677,11 +1092,22 @@
          * Includes a small delay for initial particle rendering to ensure correct dimensions.
          */
         function resetInduction() {
+            inductionRod.classList.remove('rod-horizontal'); /* Remove horizontal class */
             inductionRod.className = 'rod hidden';
-            inductionRod.style.transform = 'translateX(0)';
+            inductionRod.innerHTML = ''; // Clear indicator from rod
+            // Reset rod position above container, ensure it's horizontal
+            // Use translate for positioning, and rotate for orientation.
+            inductionRod.style.transform = 'translateY(-120px) rotate(90deg)'; 
+            
             inductionSphere.className = 'sphere'; // Sets neutral visual style
+            inductionSphere.querySelector('.charge-indicator')?.remove(); // Clear indicator
+            
             groundConnection.classList.add('hidden');
+            // Reset ground line to an appropriate hidden position (far below the sphere container)
+            groundConnection.style.top = `calc(100% + 50px)`; 
+
             clearAllChargeParticles(inductionSphere); // Clear all existing particles
+            clearAllChargeParticles(inductionRod); // Clear particles from rod too
 
             // Delay adding particles to ensure element dimensions are calculated after layout
             setTimeout(() => {
@@ -700,15 +1126,18 @@
         bringRodBtn.addEventListener('click', () => {
             if (inductionState === 0) {
                 inductionRod.classList.remove('hidden');
-                inductionRod.classList.add('rod-charged-negative');
+                inductionRod.classList.add('rod-charged-negative', 'rod-horizontal'); /* Add horizontal class */
                 inductionRod.innerHTML = '<span class="charge-indicator">-</span>';
-                inductionRod.style.transform = 'translateX(-100px)'; // Move rod closer
+                addChargeParticlesRobust(inductionRod, 5, 'negative'); // Add negative particles to the rod
+                // Move rod down to be above sphere, maintaining its horizontal rotation
+                // TranslateY moves it vertically, rotate(90deg) ensures it's horizontal
+                inductionRod.style.transform = 'translateY(40px) rotate(90deg)';
 
-                // Simulate polarization in the sphere
+                // Simulate vertical polarization in the sphere
                 setTimeout(() => {
-                    repositionParticlesForPolarization(inductionSphere, 'positive', 'negative', 'negative');
+                    repositionParticlesForVerticalPolarization(inductionSphere, 'positive', 'negative', 'negative');
 
-                    inductionInfo.textContent = 'Barra negativa cerca. Las cargas en la esfera se han separado (polarizado): positivas atraídas, negativas repelidas. Ahora conecta a tierra.';
+                    inductionInfo.textContent = 'Barra negativa cerca. Las cargas en la esfera se han separado (polarizado): positivas atraídas hacia arriba, negativas repelidas hacia abajo. Ahora conecta a tierra.';
                     bringRodBtn.disabled = true;
                     groundSphereBtn.disabled = false;
                     inductionState = 1;
@@ -719,7 +1148,18 @@
         groundSphereBtn.addEventListener('click', () => {
             if (inductionState === 1) {
                 groundConnection.classList.remove('hidden');
-                // Remove only negative particles, as electrons escape to ground
+                // Calculate the exact bottom position of the sphere relative to its container's top
+                // This is where the top of the ground line should start.
+                // Get the sphere's position relative to the document, then adjust for the container's top.
+                const sphereRect = inductionSphere.getBoundingClientRect();
+                const containerRect = inductionSphere.parentElement.getBoundingClientRect();
+                
+                // The top of the ground line should be at the sphere's bottom edge, relative to the container's top
+                const groundLineTopPosition = sphereRect.bottom - containerRect.top;
+                
+                groundConnection.style.top = `${groundLineTopPosition}px`;
+
+                // Remove negative particles, as electrons escape to ground
                 inductionSphere.querySelectorAll('.charge-particle.negative').forEach(p => p.remove());
                 inductionInfo.textContent = 'Esfera conectada a tierra. Los electrones (partículas azules) han escapado a tierra. Ahora remueve la conexión a tierra.';
                 groundSphereBtn.disabled = true;
@@ -731,6 +1171,7 @@
         removeGroundBtn.addEventListener('click', () => {
             if (inductionState === 2) {
                 groundConnection.classList.add('hidden');
+                groundConnection.style.top = `calc(100% + 50px)`; // Move ground line off-screen again
                 inductionInfo.textContent = 'Conexión a tierra removida. La esfera ahora tiene un exceso de carga positiva. Ahora remueve la barra.';
                 removeGroundBtn.disabled = true;
                 removeRodBtn.disabled = false;
@@ -740,9 +1181,12 @@
 
         removeRodBtn.addEventListener('click', () => {
             if (inductionState === 3) {
-                inductionRod.style.transform = 'translateX(0)';
+                // Move rod back up and off-screen, maintaining its horizontal rotation
+                inductionRod.style.transform = 'translateY(-120px) rotate(90deg)'; 
                 setTimeout(() => {
                     inductionRod.classList.add('hidden');
+                    inductionRod.innerHTML = ''; // Clear indicator from rod
+                    clearAllChargeParticles(inductionRod); // Clear particles from rod too
                     // Ensure only positive charges remain and redistribute them
                     clearAllChargeParticles(inductionSphere); // Clear any lingering polarized particles
                     addChargeParticlesRobust(inductionSphere, 12, 'positive'); // Add only positive particles to show final charge
@@ -775,8 +1219,10 @@
          */
         function createWallCharges(wallElement, numPositive, numNegative) {
             clearAllChargeParticles(wallElement);
-            const wallWidth = wallElement.clientWidth;
-            const wallHeight = wallElement.clientHeight;
+            const wallRect = wallElement.getBoundingClientRect();
+            const wallWidth = wallRect.width > 0 ? wallRect.width : 150; // Use actual or fallback
+            const wallHeight = wallRect.height > 0 ? wallRect.height : 100; // Use actual or fallback
+
             const particleSize = 10;
             const padding = 5;
 
@@ -804,8 +1250,12 @@
          * Includes a small delay for initial particle rendering to ensure correct dimensions.
          */
         function resetPolarization() {
-            polarizationRod.className = 'rod hidden';
-            polarizationRod.style.transform = 'translateX(0)';
+            polarizationRod.classList.remove('rod-horizontal'); /* Ensure horizontal class is removed */
+            polarizationRod.className = 'rod hidden'; /* Set back to default rod, hidden */
+            polarizationRod.innerHTML = ''; // Clear indicator
+            // Reset rod to hidden off-screen above
+            polarizationRod.style.top = '-50px'; 
+            polarizationRod.style.transform = 'translateX(-50%)'; /* Keep it horizontally centered */
             clearAllChargeParticles(polarizationWall);
             // Delay adding particles to ensure element dimensions are calculated after layout
             setTimeout(() => {
@@ -814,83 +1264,79 @@
 
             approachRodBtn.disabled = false;
             removeRodPolarizationBtn.disabled = true; // Usar el ID modificado aquí
-            polarizationInfo.textContent = 'Acerca la barra cargada a la pared para observar la polarización.';
+            polarizationInfo.textContent = 'Acerca la barra cargada al rectángulo para observar la polarización.';
             polarizationState = 0;
         }
 
         // MODIFICADO: Event listener para el botón "Remover Barra" en polarización
         removeRodPolarizationBtn.addEventListener('click', () => {
             if (polarizationState === 1) {
-                polarizationRod.style.transform = 'translateX(0)';
-                setTimeout(() => {
-                    polarizationRod.classList.add('hidden');
-                    // Redistribute charges back to a random neutral position
-                    const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
-                    const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
+                // Instantly hide and reset position without animation
+                polarizationRod.classList.add('hidden');
+                polarizationRod.innerHTML = ''; // Clear indicator
+                clearAllChargeParticles(polarizationRod); // Clear particles from rod
+                // Reset rod to hidden off-screen above
+                polarizationRod.style.top = '-50px'; 
+                polarizationRod.style.transform = 'translateX(-50%)'; 
 
-                    const wallWidth = polarizationWall.clientWidth;
-                    const wallHeight = polarizationWall.clientHeight;
-                    const particleSize = 10;
-                    const padding = 5;
-                    const innerWidth = wallWidth - 2 * padding - particleSize;
-                    const innerHeight = wallHeight - 2 * padding - particleSize;
+                // Redistribute charges back to a random neutral position
+                const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
+                const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
+
+                const wallRect = polarizationWall.getBoundingClientRect();
+                const wallWidth = wallRect.width > 0 ? wallRect.width : 150; // Use actual or fallback
+                const wallHeight = wallRect.height > 0 ? wallRect.height : 100; // Use actual or fallback
+
+                const particleSize = 10;
+                const padding = 5;
+                const innerWidth = wallWidth - 2 * padding - particleSize;
+                const innerHeight = wallHeight - 2 * padding - particleSize;
 
 
-                    positiveWallParticles.forEach(p => {
-                        const x = Math.random() * innerWidth + padding;
-                        const y = Math.random() * innerHeight + padding;
-                        p.style.left = `${x}px`;
-                        p.style.top = `${y}px`;
-                    });
-                    negativeWallParticles.forEach(n => {
-                        const x = Math.random() * innerWidth + padding;
-                        const y = Math.random() * innerHeight + padding;
-                        n.style.left = `${x}px`;
-                        n.style.top = `${y}px`;
-                    });
+                positiveWallParticles.forEach(p => {
+                    const x = Math.random() * innerWidth + padding;
+                    const y = Math.random() * innerHeight + padding;
+                    p.style.left = `${x}px`;
+                    p.style.top = `${y}px`;
+                });
+                negativeWallParticles.forEach(n => {
+                    const x = Math.random() * innerWidth + padding;
+                    const y = Math.random() * innerHeight + padding;
+                    n.style.left = `${x}px`;
+                    n.style.top = `${y}px`;
+                });
 
-                    // MODIFICADO: Mensaje de información
-                    polarizationInfo.textContent = 'Cuando la barra se quita se observa que la pared vuelve a su estado neutro (no polarizado).';
-                    removeRodPolarizationBtn.disabled = true; // Usar el ID modificado aquí
-                    approachRodBtn.disabled = false;
-                    polarizationState = 0;
-                }, 500);
+                // MODIFICADO: Mensaje de información
+                polarizationInfo.textContent = 'Cuando la barra se quita se observa que la pared vuelve a su estado neutro (no polarizado).';
+                removeRodPolarizationBtn.disabled = true; // Usar el ID modificado aquí
+                approachRodBtn.disabled = false;
+                polarizationState = 0;
             }
         });
 
         approachRodBtn.addEventListener('click', () => {
             if (polarizationState === 0) {
                 polarizationRod.classList.remove('hidden');
-                polarizationRod.classList.add('rod-charged-negative');
+                polarizationRod.classList.add('rod-charged-negative', 'rod-horizontal'); /* Add horizontal class */
                 polarizationRod.innerHTML = '<span class="charge-indicator">-</span>';
-                polarizationRod.style.transform = 'translateX(-100px)'; // Move rod closer
+                // Add negative particles to the polarization rod as well
+                addChargeParticlesRobust(polarizationRod, 5, 'negative'); 
+                
+                // Position the rod above the wall, centered horizontally
+                const wallRect = polarizationWall.getBoundingClientRect();
+                const containerRect = polarizationWall.parentElement.getBoundingClientRect();
+
+                // Calculate the top position to be just above the wall's top edge
+                const rodHeight = polarizationRod.offsetHeight; // Get current height (which is 10px from CSS .rod-horizontal)
+                const wallTopRelativeToContainer = wallRect.top - containerRect.top;
+                const desiredTopPosition = wallTopRelativeToContainer - rodHeight - 10; // 10px gap
+                
+                polarizationRod.style.top = `${desiredTopPosition}px`;
+                polarizationRod.style.transform = 'translateX(-50%)'; // Keep it horizontally centered, no rotation applied here
 
                 setTimeout(() => {
-                    const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
-                    const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
-
-                    const wallWidth = polarizationWall.clientWidth;
-                    const wallHeight = polarizationWall.clientHeight;
-                    const particleSize = 10;
-                    const padding = 5;
-
-                    const innerHalfWidth = (wallWidth / 2) - padding - (particleSize / 2);
-                    const innerHeight = wallHeight - 2 * padding - particleSize;
-
-                    // Positive charges move closer (left side)
-                    positiveWallParticles.forEach(p => {
-                        const x = Math.random() * innerHalfWidth + padding;
-                        const y = Math.random() * innerHeight + padding;
-                        p.style.left = `${x}px`;
-                        p.style.top = `${y}px`;
-                    });
-                    // Negative charges move further away (right side)
-                    negativeWallParticles.forEach(n => {
-                        const x = Math.random() * ((wallWidth - padding - particleSize) - (wallWidth / 2 + padding)) + (wallWidth / 2 + padding);
-                        const y = Math.random() * innerHeight + padding;
-                        n.style.left = `${x}px`;
-                        n.style.top = `${y}px`;
-                    });
+                    // Reposition wall particles for vertical polarization
+                    repositionWallParticlesForVerticalPolarization(polarizationWall, 'wall-charge-positive', 'wall-charge-negative', 'negative');
 
                     polarizationInfo.textContent = 'Barra negativa cerca. La pared (dieléctrico) se ha polarizado. Las cargas positivas se atraen y se mueven hacia el lado cercano, mientras que las negativas se repelen y se mueven hacia el lado lejano.';
                     approachRodBtn.disabled = true;
@@ -905,6 +1351,7 @@
 
         // Initializes all simulations and renders KaTeX once the window and its elements are fully loaded
         window.onload = function() {
+            resetChargeSimulation(); // Initialize the new simulation first
             resetConduction();
             resetInduction();
             resetPolarization();
