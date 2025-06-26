@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conceptos de Carga Eléctrica</title>
+    <!-- Incluye Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluye KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+    <!-- Incluye KaTeX JS y auto-render extension -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <!-- Se carga auto-render.min.js, pero la llamada a renderMathInElement se moverá al script principal -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <style>
+        /* Define la fuente Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Color de fondo claro */
+            color: #334155; /* Color de texto principal */
+        }
+        .container {
+            max-width: 96%; /* Ancho máximo para el contenido */
+            margin: 0 auto; /* Centra el contenedor */
+            padding: 1rem; /* Espaciado interno */
+        }
+        .concept-section {
+            background-color: #ffffff; /* Fondo blanco para las secciones */
+            border-radius: 0.75rem; /* Bordes redondeados */
+            padding: 2rem; /* Espaciado interno de las secciones */
+            margin-bottom: 1.5rem; /* Margen inferior entre secciones */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+        }
+        .interactive-area {
+            background-color: #e2e8f0; /* Fondo más oscuro para el área interactiva */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .sphere {
+            width: 80px;
+            height: 80px;
+            background-color: #cbd5e1; /* Gris claro */
+            border-radius: 50%;
+            border: 2px solid #64748b; /* Borde oscuro */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #475569;
+            margin: 0 1rem;
+            position: relative; /* Para posicionar el texto de carga */
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.3s ease;
+            overflow: hidden; /* Asegura que las partículas se mantengan dentro */
+        }
+        .sphere-charged-positive {
+            background-color: #ef4444; /* Rojo */
+            border-color: #dc2626;
+            color: #fee2e2;
+        }
+        .sphere-charged-negative {
+            background-color: #3b82f6; /* Azul */
+            border-color: #2563eb;
+            color: #eff6ff;
+        }
+        .charge-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none; /* Asegura que no bloquee clics en la esfera */
+        }
+        .charge-particle {
+            position: absolute;
+            width: 15px; /* Tamaño de partícula para visibilidad */
+            height: 15px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+            animation: float 2s infinite alternate ease-in-out;
+            z-index: 10; /* Asegura que las partículas estén sobre la esfera */
+            transition: left 0.5s ease, top 0.5s ease; /* Transición para movimiento de partículas */
+        }
+        .charge-particle.positive {
+            background-color: #fca5a5; /* Rojo claro */
+        }
+        .charge-particle.negative {
+            background-color: #bfdbfe; /* Azul claro */
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
+        }
+        .ground-line {
+            width: 4px;
+            height: 40px;
+            background-color: #475569;
+            margin-top: 10px;
+            position: relative;
+        }
+        .ground-line::before, .ground-line::after {
+            content: '';
+            position: absolute;
+            background-color: #475569;
+        }
+        .ground-line::before {
+            width: 12px;
+            height: 4px;
+            top: 40px;
+            left: -4px;
+        }
+        .ground-line::after {
+            width: 20px;
+            height: 4px;
+            top: 48px;
+            left: -8px;
+        }
+        .rod {
+            width: 20px;
+            height: 120px;
+            background-color: #475569; /* Gris oscuro */
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.5s ease;
+            z-index: 20; /* Asegura que la barra esté sobre la esfera */
+        }
+        .rod-charged-positive {
+            background-color: #dc2626; /* Rojo oscuro */
+        }
+        .rod-charged-negative {
+            background-color: #2563eb; /* Azul oscuro */
+        }
+        .rod .charge-indicator {
+            font-size: 1.5rem;
+        }
+        .wall {
+            width: 150px;
+            height: 100px;
+            background-color: #e0e0e0; /* Gris claro */
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #a0a0a0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .wall-charge-positive, .wall-charge-negative {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .wall-charge-positive { background-color: #fca5a5; }
+        .wall-charge-negative { background-color: #bfdbfe; }
+
+        /* Estilos para el mensaje de información */
+        .info-message {
+            background-color: #d1fae5; /* Verde claro */
+            color: #065f46; /* Verde oscuro */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .btn {
+            background-color: #4f46e5; /* Índigo */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn:hover {
+            background-color: #4338ca; /* Índigo más oscuro */
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .reset-btn {
+            background-color: #dc2626; /* Rojo */
+        }
+        .reset-btn:hover {
+            background-color: #b91c1c; /* Rojo más oscuro */
+        }
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+        }
+        .explanation-text {
+            max-width: 600px;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+        /* Media queries para responsividad */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            .concept-section {
+                padding: 1rem;
+            }
+            .interactive-area {
+                padding: 1rem;
+            }
+            .sphere {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+            .charge-indicator {
+                font-size: 1.5rem;
+            }
+            .rod {
+                width: 15px;
+                height: 100px;
+            }
+            .wall {
+                width: 120px;
+                height: 80px;
+            }
+            .flex-center {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800">
+    <div class="container py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-5xl font-extrabold text-indigo-700 mb-4 rounded-xl p-4 bg-indigo-100 shadow-lg">
+                Conceptos Fundamentales de la Carga Eléctrica
+            </h1>
+        </header>
+
+        <!-- Introducción: Contexto Histórico -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">1. Contexto Histórico: Los Orígenes de la Electricidad</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                Desde la antigüedad, la humanidad ha observado fenómenos eléctricos sin comprender su naturaleza. Fue Tales de Mileto, alrededor del 600 a.C., quien registró que frotar ámbar (en griego, <i>elektron</i>) con un paño atraía objetos ligeros, dando origen a la palabra "electricidad".
+            </p>
+            <p class="text-lg leading-relaxed mb-4">
+                Durante siglos, estos fenómenos fueron vistos como curiosidades. Sin embargo, en el siglo XVII, William Gilbert acuñó el término "eléctrico" y distinguió entre materiales que podían electrificarse (aislantes) y aquellos que no (conductores, aunque su entendimiento era limitado).
+            </p>
+            <p class="text-lg leading-relaxed">
+                El siglo XVIII marcó un punto de inflexión con figuras como Charles-Augustin de Coulomb, quien formuló la ley que describe la fuerza entre cargas eléctricas. Pero fue Benjamin Franklin quien propuso la idea de que la electricidad era un "fluido" y que existían dos tipos de cargas: positiva y negativa, y que la carga total se conservaba. Sus experimentos con cometas demostraron la naturaleza eléctrica de los rayos. Estos avances sentaron las bases para nuestra comprensión moderna de la carga eléctrica, que exploraremos a continuación.
+            </p>
+        </section>
+
+        <!-- Concepto 1: Carga Eléctrica -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">2. Carga Eléctrica</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                La carga eléctrica es una propiedad fundamental de la materia que causa que las partículas experimenten una fuerza cuando se encuentran en un campo electromagnético. Existen dos tipos de carga eléctrica: <strong>positiva (+)</strong> y <strong>negativa (-)</strong>.
+            </p>
+            <ul class="list-disc list-inside text-lg leading-relaxed mb-4 pl-4">
+                <li>Las cargas opuestas se <strong>atraen</strong>.</li>
+                <li>Las cargas iguales se <strong>repelen</strong>.</li>
+            </ul>
+            <p class="text-lg leading-relaxed mb-2">
+                La unidad de carga eléctrica en el Sistema Internacional es el Coulomb (C). La carga más pequeña que existe libremente en la naturaleza es la carga elemental ($e$).
+                <br>
+                El valor de la carga elemental para un protón es de $+1.602 \times 10^{-19}$ C y para un electrón es de $-1.602 \times 10^{-19}$ C.
+                Es importante destacar que también existen partículas como los <strong>neutrones</strong>, que no poseen carga eléctrica neta, por lo que son partículas <strong>neutras</strong>.
+            </p>
+        </section>
+
+        <!-- Concepto 2: Carga por Conducción -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">3. Carga por Conducción</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                La carga por conducción es un proceso en el que un objeto cargado transfiere carga a un objeto neutro (o con carga diferente) mediante <strong>contacto directo</strong>. Al tocarse, las cargas libres (generalmente electrones en los metales) se redistribuyen entre ambos objetos hasta alcanzar un equilibrio.
+            </p>
+            <p class="text-lg leading-relaxed mb-4">
+                Como resultado de esta transferencia, ambos objetos terminan con el <strong>mismo tipo de carga neta</strong>. Por ejemplo, si un objeto cargado negativamente toca uno neutro, algunos electrones se moverán al objeto neutro, dejando a ambos con una carga neta negativa.
+            </p>
+
+            <div class="interactive-area">
+                <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Carga por Conducción</p>
+                <div class="flex-center w-full">
+                    <div id="conductionSphere1" class="sphere"></div>
+                    <div id="conductionSphere2" class="sphere"></div>
+                </div>
+                <div class="flex flex-col sm:flex-row mt-6 gap-4">
+                    <button id="chargeConductionBtn" class="btn">Cargar Esfera 1 Negativamente</button>
+                    <button id="touchSpheresBtn" class="btn">Hacer Contacto</button>
+                    <button id="resetConductionBtn" class="btn reset-btn">Reiniciar</button>
+                </div>
+                <p id="conductionInfo" class="info-message mt-4 w-full">
+                    Haz clic en "Cargar Esfera 1 Negativamente" y luego en "Hacer Contacto" para ver la conducción.
+                </p>
+            </div>
+        </section>
+
+        <!-- Concepto 3: Carga por Inducción -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">4. Carga por Inducción</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                La carga por inducción permite cargar un objeto conductor <strong>sin necesidad de contacto directo</strong> con el objeto cargado. El proceso consta de los siguientes pasos:
+            </p>
+            <ol class="list-decimal list-inside text-lg leading-relaxed mb-4 pl-4">
+                <li>Se acerca un objeto cargado (el inductor) a un conductor neutro, sin tocarlo.</li>
+                <li>El campo eléctrico del inductor provoca que las cargas libres en el conductor neutro se separen: las cargas de signo opuesto al inductor se atraen y se mueven hacia él, mientras que las cargas del mismo signo se repelen y se alejan.</li>
+                <li>Mientras el inductor permanece cerca, se conecta el conductor a tierra (por ejemplo, tocándolo con la mano o un cable). Esto permite que las cargas repelidas (en exceso) fluyan hacia o desde la tierra.</li>
+                <li>Se interrumpe la conexión a tierra mientras el inductor aún está cerca.</li>
+                <li>Finalmente, se retira el objeto inductor. El conductor inducido queda con una carga neta del <strong>tipo opuesto</strong> a la carga del inductor.</li>
+            </ol>
+            <p class="text-lg leading-relaxed mb-4">
+                Es fundamental que la conexión a tierra se remueva *antes* de retirar el objeto cargado. Si el inductor se retira primero, las cargas que se habían alejado de él volverán a distribuirse uniformemente y el objeto neutro recuperaría su estado original.
+            </p>
+
+            <div class="interactive-area">
+                <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Carga por Inducción</p>
+                <div class="flex-center w-full">
+                    <div id="inductionRod" class="rod hidden"></div>
+                    <div class="flex flex-col items-center">
+                        <div id="inductionSphere" class="sphere"></div>
+                        <div id="groundConnection" class="ground-line hidden"></div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row mt-6 gap-4">
+                    <button id="bringRodBtn" class="btn">Acercar Barra Negativa</button>
+                    <button id="groundSphereBtn" class="btn">Conectar a Tierra</button>
+                    <button id="removeGroundBtn" class="btn">Remover Conexión a Tierra</button>
+                    <button id="removeRodBtn" class="btn">Remover Barra</button>
+                    <button id="resetInductionBtn" class="btn reset-btn">Reiniciar</button>
+                </div>
+                <p id="inductionInfo" class="info-message mt-4 w-full">
+                    Sigue los pasos para observar la carga por inducción.
+                </p>
+            </div>
+        </section>
+
+        <!-- Concepto 4: Polarización -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">5. Polarización</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                La polarización es un fenómeno que ocurre en <strong>materiales aislantes</strong> (dieléctricos) cuando se les acerca un objeto cargado. A diferencia de los conductores, donde las cargas pueden moverse libremente, en los aislantes los electrones están fuertemente unidos a sus átomos o moléculas y no pueden desplazarse de un lugar a otro.
+            </p>
+            <p class="text-lg leading-relaxed mb-4">
+                En cambio, bajo la influencia de un campo eléctrico externo (creado por el objeto cargado), los átomos o moléculas individuales dentro del aislante pueden deformarse o rotar ligeramente. Esto provoca una separación de sus centros de carga positiva y negativa, creando pequeños "dipolos eléctricos".
+            </p>
+            <p class="text-lg leading-relaxed mb-4">
+                El efecto neto es que el lado del objeto aislante más cercano al objeto cargado adquiere una carga superficial efectiva de signo opuesto, mientras que el lado más alejado adquiere una carga superficial efectiva del mismo signo. A pesar de esta reorientación interna, el objeto aislante <strong>permanece eléctricamente neutro en su totalidad</strong>, ya que no hay transferencia neta de electrones.
+            </p>
+            <p class="text-lg leading-relaxed">
+                Este fenómeno explica por qué objetos cargados pueden atraer objetos neutros, como un globo frotado que se adhiere a una pared sin carga.
+            </p>
+
+            <div class="interactive-area">
+                <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Polarización</p>
+                <div class="flex-center w-full">
+                    <div id="polarizationRod" class="rod hidden"></div>
+                    <div id="polarizationWall" class="wall"></div>
+                </div>
+                <div class="flex flex-col sm:flex-row mt-6 gap-4">
+                    <button id="approachRodBtn" class="btn">Acercar Barra Negativa a la Pared</button>
+                    <button id="retractRodBtn" class="btn">Remover Barra</button>
+                    <button id="resetPolarizationBtn" class="btn reset-btn">Reiniciar</button>
+                </div>
+                <p id="polarizationInfo" class="info-message mt-4 w-full">
+                    Acerca la barra cargada a la pared para observar la polarización.
+                </p>
+            </div>
+        </section>
+
+        <!-- Sección de Ejemplo Resuelto -->
+        <section class="concept-section">
+            <h2 class="text-3xl font-bold text-indigo-600 mb-4">6. Ejemplo Resuelto: Cálculo de Carga Neta</h2>
+            <p class="text-lg leading-relaxed mb-4">
+                A menudo, necesitamos calcular la carga total (o neta) de un objeto que ha ganado o perdido electrones. Dado que la carga es cuántica (existe en paquetes discretos), la carga total de un objeto es siempre un múltiplo entero de la carga elemental ($e$).
+            </p>
+            <p class="text-lg leading-relaxed mb-4 font-semibold text-gray-700">
+                La fórmula para la carga neta ($Q$) es:
+            </p>
+            <div class="text-center my-6 text-2xl">
+                $$Q = n \cdot e$$
+            </div>
+            <ul class="list-disc list-inside text-lg leading-relaxed mb-4 pl-4">
+                <li>$Q$: Carga neta del objeto (en Coulombs, C)</li>
+                <li>$n$: Número de electrones (en exceso o déficit)</li>
+                <li>$e$: Carga elemental ($1.602 \times 10^{-19}$ C)</li>
+            </ul>
+
+            <h3 class="text-2xl font-bold text-indigo-500 mb-3 mt-6">Problema 1:</h3>
+            <p class="text-lg leading-relaxed mb-4">
+                Un objeto neutro pierde $5 \times 10^{12}$ electrones. ¿Cuál es la carga neta de este objeto?
+            </p>
+
+            <h3 class="text-2xl font-bold text-indigo-500 mb-3 mt-6">Solución 1:</h3>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>1. Identificar los datos conocidos:</strong>
+                <ul class="list-disc list-inside text-lg leading-relaxed pl-6">
+                    <li>Número de electrones perdidos ($n$) = $5 \times 10^{12}$ electrones.</li>
+                    <li>Carga elemental ($e$) = $1.602 \times 10^{-19}$ C.</li>
+                </ul>
+            </p>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>2. Determinar el signo de la carga:</strong><br>
+                Un objeto se considera <strong>neutro</strong> cuando tiene una cantidad igual de cargas positivas (protones en su núcleo) y cargas negativas (electrones). En un estado neutro, estas cargas se equilibran mutuamente, resultando en una carga neta de cero. Cuando un objeto neutro <strong>pierde</strong> electrones (que son partículas con carga negativa), el número de protones (partículas con carga positiva) permanece constante, pero el número de electrones disminuye. Esto deja al objeto con un <strong>exceso de cargas positivas</strong>. Por lo tanto, la carga neta del objeto será <strong>positiva</strong>.
+            </p>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>3. Aplicar la fórmula:</strong>
+                $$Q = n \cdot e$$
+                $$Q = (5 \times 10^{12}) \cdot (1.602 \times 10^{-19} \text{ C})$$
+                $$Q = 8.01 \times 10^{-7} \text{ C}$$
+            </p>
+            <p class="text-lg leading-relaxed mb-4 font-bold text-indigo-600">
+                Respuesta: La carga neta del objeto es de $+8.01 \times 10^{-7}$ C.
+            </p>
+
+            <h3 class="text-2xl font-bold text-indigo-500 mb-3 mt-8">Problema 2:</h3>
+            <p class="text-lg leading-relaxed mb-4">
+                Un objeto inicialmente neutro gana $3 \times 10^{13}$ electrones. ¿Cuál es la carga neta final de este objeto?
+            </p>
+
+            <h3 class="text-2xl font-bold text-indigo-500 mb-3 mt-6">Solución 2:</h3>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>1. Identificar los datos conocidos:</strong>
+                <ul class="list-disc list-inside text-lg leading-relaxed pl-6">
+                    <li>Número de electrones ganados ($n$) = $3 \times 10^{13}$ electrones.</li>
+                    <li>Carga elemental ($e$) = $1.602 \times 10^{-19}$ C.</li>
+                </ul>
+            </p>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>2. Determinar el signo de la carga:</strong><br>
+                Un objeto neutro tiene una cantidad igual de protones (cargas positivas) y electrones (cargas negativas). Cuando un objeto <strong>gana</strong> electrones (cargas negativas), adquiere un <strong>exceso de cargas negativas</strong>. Esto provoca un desequilibrio, haciendo que la carga neta del objeto sea <strong>negativa</strong>.
+            </p>
+            <p class="text-lg leading-relaxed mb-2">
+                <strong>3. Aplicar la fórmula:</strong>
+                $$Q = n \cdot (-e)$$
+                (Usamos $-e$ porque la carga ganada es de electrones, que son negativos)
+                $$Q = (3 \times 10^{13}) \cdot (-1.602 \times 10^{-19} \text{ C})$$
+                $$Q = -4.806 \times 10^{-6} \text{ C}$$
+            </p>
+            <p class="text-lg leading-relaxed mb-4 font-bold text-indigo-600">
+                Respuesta: La carga neta del objeto es de $-4.806 \times 10^{-6}$ C.
+            </p>
+        </section>
+
+        <footer class="text-center py-8 text-gray-500 text-sm">
+            <p>&copy; 2025 Conceptos de Carga Eléctrica. Desarrollado para estudiantes de duodécimo grado.</p>
+        </footer>
+    </div>
+
+    <script>
+        // JavaScript for interactive simulations
+
+        // --- General Utilities ---
+        /**
+         * Sets the visual charge of a sphere element.
+         * @param {HTMLElement} sphereElement - The DOM element representing the sphere.
+         * @param {string} chargeType - 'positive', 'negative', or 'neutral'.
+         */
+        function setSphereCharge(sphereElement, chargeType) {
+            sphereElement.classList.remove('sphere-charged-positive', 'sphere-charged-negative');
+            sphereElement.innerHTML = ''; // Clear any existing charge indicator
+            if (chargeType === 'positive') {
+                sphereElement.classList.add('sphere-charged-positive');
+                sphereElement.innerHTML = '<span class="charge-indicator">+</span>';
+            } else if (chargeType === 'negative') {
+                sphereElement.classList.add('sphere-charged-negative');
+                sphereElement.innerHTML = '<span class="charge-indicator">-</span>';
+            }
+            // For neutral, just ensure classes are removed and innerHTML is empty
+        }
+
+        /**
+         * Clears all charge particles from a given element.
+         * @param {HTMLElement} element - The DOM element to clear particles from.
+         */
+        function clearAllChargeParticles(element) {
+            element.querySelectorAll('.charge-particle').forEach(p => p.remove());
+            element.querySelectorAll('.wall-charge-positive').forEach(p => p.remove()); // For polarization
+            element.querySelectorAll('.wall-charge-negative').forEach(p => p.remove()); // For polarization
+        }
+
+        /**
+         * Adds charge particles to an element with robust positioning.
+         * Attempts to use actual element dimensions, falls back to fixed values if not available.
+         * @param {HTMLElement} element - The DOM element to add particles to.
+         * @param {number} num - The number of particles to add.
+         * @param {string} type - 'positive' or 'negative' to apply corresponding styles.
+         */
+        function addChargeParticlesRobust(element, num, type) {
+            const elementWidth = element.clientWidth;
+            const elementHeight = element.clientHeight;
+
+            // Use fixed dimensions if element.clientWidth/Height are 0 (e.g., before layout)
+            const fallbackWidth = 80; // sphere width (based on CSS)
+            const fallbackHeight = 80; // sphere height (based on CSS)
+            const currentWidth = elementWidth > 0 ? elementWidth : fallbackWidth;
+            const currentHeight = elementHeight > 0 ? elementHeight : fallbackHeight;
+
+
+            const particleSize = 15; // Fixed size based on CSS
+            const padding = 5; // To keep particles away from the very edge
+
+            const innerWidth = currentWidth - 2 * padding - particleSize;
+            const innerHeight = currentHeight - 2 * padding - particleSize;
+
+            for (let i = 0; i < num; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('charge-particle', type);
+
+                // Ensure random position is within the element's bounds
+                const x = Math.random() * innerWidth + padding;
+                const y = Math.random() * innerHeight + padding;
+
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                element.appendChild(particle);
+            }
+        }
+
+        /**
+         * Repositions charge particles within a sphere to simulate polarization.
+         * Particles of opposite charge move towards the rod, same charge move away.
+         * @param {HTMLElement} sphereElement - The sphere element containing particles.
+         * @param {string} positiveType - The class name for positive particles (e.g., 'positive').
+         * @param {string} negativeType - The class name for negative particles (e.g., 'negative').
+         * @param {string} rodChargeType - The charge of the inducing rod ('negative' assumed for this sim).
+         */
+        function repositionParticlesForPolarization(sphereElement, positiveType, negativeType, rodChargeType) {
+            const positiveParticles = sphereElement.querySelectorAll(`.charge-particle.${positiveType}`);
+            const negativeParticles = sphereElement.querySelectorAll(`.charge-particle.${negativeType}`);
+
+            const sphereSize = 80; // Fixed size based on CSS (adjust if your sphere size changes)
+            const particleSize = 15;
+            const padding = 5;
+
+            const innerHalfWidth = (sphereSize / 2) - padding - (particleSize / 2);
+            const innerHeight = sphereSize - 2 * padding - particleSize;
+
+            // Define target ranges for particle movement based on rod charge
+            let targetXMinPos, targetXMaxPos;
+            let targetXMinNeg, targetXMaxNeg;
+
+            if (rodChargeType === 'negative') {
+                // Positive particles move to the left half (attracted to negative rod)
+                targetXMinPos = padding;
+                targetXMaxPos = innerHalfWidth;
+                // Negative particles move to the right half (repelled by negative rod)
+                targetXMinNeg = sphereSize / 2 + padding;
+                targetXMaxNeg = sphereSize - padding - particleSize;
+            } else {
+                // If rod were positive, logic would flip (not implemented in this simulation)
+                // For now, if rod is not negative, assume neutral or no specific polarization
+                targetXMinPos = padding; // Default to full sphere for safety
+                targetXMaxPos = sphereSize - padding - particleSize;
+                targetXMinNeg = padding;
+                targetXMaxNeg = sphereSize - padding - particleSize;
+            }
+
+            positiveParticles.forEach(p => {
+                const x = Math.random() * (targetXMaxPos - targetXMinPos) + targetXMinPos;
+                const y = Math.random() * innerHeight + padding;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+            });
+
+            negativeParticles.forEach(p => {
+                const x = Math.random() * (targetXMaxNeg - targetXMinNeg) + targetXMinNeg;
+                const y = Math.random() * innerHeight + padding;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+            });
+        }
+
+
+        // --- Conduction Simulation ---
+        const conductionSphere1 = document.getElementById('conductionSphere1');
+        const conductionSphere2 = document.getElementById('conductionSphere2');
+        const chargeConductionBtn = document.getElementById('chargeConductionBtn');
+        const touchSpheresBtn = document.getElementById('touchSpheresBtn');
+        const resetConductionBtn = document.getElementById('resetConductionBtn');
+        const conductionInfo = document.getElementById('conductionInfo');
+
+        let conductionState = 0; // 0: initial, 1: sphere 1 charged, 2: in contact
+
+        /**
+         * Resets the conduction simulation to its initial state.
+         */
+        function resetConduction() {
+            conductionSphere1.className = 'sphere';
+            conductionSphere2.className = 'sphere';
+            conductionSphere1.innerHTML = '';
+            conductionSphere2.innerHTML = '';
+            conductionSphere1.style.transform = 'translateX(0px)';
+            conductionSphere2.style.transform = 'translateX(0px)';
+            clearAllChargeParticles(conductionSphere1);
+            clearAllChargeParticles(conductionSphere2);
+            chargeConductionBtn.disabled = false;
+            touchSpheresBtn.disabled = true;
+            conductionInfo.textContent = 'Haz clic en "Cargar Esfera 1 Negativamente" y luego en "Hacer Contacto" para ver la conducción.';
+            conductionState = 0;
+        }
+
+        chargeConductionBtn.addEventListener('click', () => {
+            if (conductionState === 0) {
+                setSphereCharge(conductionSphere1, 'negative');
+                addChargeParticlesRobust(conductionSphere1, 8, 'negative');
+                conductionInfo.textContent = 'Esfera 1 cargada negativamente. Ahora haz clic en "Hacer Contacto".';
+                chargeConductionBtn.disabled = true;
+                touchSpheresBtn.disabled = false;
+                conductionState = 1;
+            }
+        });
+
+        touchSpheresBtn.addEventListener('click', () => {
+            if (conductionState === 1) {
+                conductionSphere1.style.transition = 'transform 1s ease';
+                conductionSphere2.style.transition = 'transform 1s ease';
+                conductionSphere1.style.transform = 'translateX(35px)';
+                conductionSphere2.style.transform = 'translateX(-35px)';
+
+                setTimeout(() => {
+                    setSphereCharge(conductionSphere1, 'negative');
+                    setSphereCharge(conductionSphere2, 'negative');
+                    clearAllChargeParticles(conductionSphere1);
+                    clearAllChargeParticles(conductionSphere2);
+                    addChargeParticlesRobust(conductionSphere1, 4, 'negative'); // Distribute particles
+                    addChargeParticlesRobust(conductionSphere2, 4, 'negative'); // Distribute particles
+                    conductionInfo.textContent = 'Las esferas han hecho contacto directo y la carga se ha distribuido. Ambas tienen carga negativa.';
+                    touchSpheresBtn.disabled = true;
+                    conductionState = 2;
+                    // Reset transitions for future interactions
+                    conductionSphere1.style.transition = '';
+                    conductionSphere2.style.transition = '';
+                    conductionSphere1.style.transform = 'translateX(35px)';
+                    conductionSphere2.style.transform = 'translateX(-35px)';
+                }, 1000);
+            }
+        });
+
+        resetConductionBtn.addEventListener('click', resetConduction);
+
+
+        // --- Induction Simulation ---
+        const inductionRod = document.getElementById('inductionRod');
+        const inductionSphere = document.getElementById('inductionSphere');
+        const groundConnection = document.getElementById('groundConnection');
+        const bringRodBtn = document.getElementById('bringRodBtn');
+        const groundSphereBtn = document.getElementById('groundSphereBtn');
+        const removeGroundBtn = document.getElementById('removeGroundBtn');
+        const removeRodBtn = document.getElementById('removeRodBtn');
+        const resetInductionBtn = document.getElementById('resetInductionBtn');
+        const inductionInfo = document.getElementById('inductionInfo');
+
+        let inductionState = 0; // 0: initial, 1: rod near, 2: grounded, 3: ground removed, 4: rod removed
+
+        /**
+         * Resets the induction simulation to its initial state.
+         * Includes a small delay for initial particle rendering to ensure correct dimensions.
+         */
+        function resetInduction() {
+            inductionRod.className = 'rod hidden';
+            inductionRod.style.transform = 'translateX(0)';
+            inductionSphere.className = 'sphere'; // Sets neutral visual style
+            groundConnection.classList.add('hidden');
+            clearAllChargeParticles(inductionSphere); // Clear all existing particles
+
+            // Delay adding particles to ensure element dimensions are calculated after layout
+            setTimeout(() => {
+                addChargeParticlesRobust(inductionSphere, 10, 'positive'); // E.g., 10 positive particles
+                addChargeParticlesRobust(inductionSphere, 10, 'negative'); // E.g., 10 negative particles
+            }, 50); // Short delay to allow DOM rendering
+
+            bringRodBtn.disabled = false;
+            groundSphereBtn.disabled = true;
+            removeGroundBtn.disabled = true;
+            removeRodBtn.disabled = true;
+            inductionInfo.textContent = 'Sigue los pasos para observar la carga por inducción.';
+            inductionState = 0;
+        }
+
+        bringRodBtn.addEventListener('click', () => {
+            if (inductionState === 0) {
+                inductionRod.classList.remove('hidden');
+                inductionRod.classList.add('rod-charged-negative');
+                inductionRod.innerHTML = '<span class="charge-indicator">-</span>';
+                inductionRod.style.transform = 'translateX(-100px)'; // Move rod closer
+
+                // Simulate polarization in the sphere
+                setTimeout(() => {
+                    repositionParticlesForPolarization(inductionSphere, 'positive', 'negative', 'negative');
+
+                    inductionInfo.textContent = 'Barra negativa cerca. Las cargas en la esfera se han separado (polarizado): positivas atraídas, negativas repelidas. Ahora conecta a tierra.';
+                    bringRodBtn.disabled = true;
+                    groundSphereBtn.disabled = false;
+                    inductionState = 1;
+                }, 500);
+            }
+        });
+
+        groundSphereBtn.addEventListener('click', () => {
+            if (inductionState === 1) {
+                groundConnection.classList.remove('hidden');
+                // Remove only negative particles, as electrons escape to ground
+                inductionSphere.querySelectorAll('.charge-particle.negative').forEach(p => p.remove());
+                inductionInfo.textContent = 'Esfera conectada a tierra. Los electrones (partículas azules) han escapado a tierra. Ahora remueve la conexión a tierra.';
+                groundSphereBtn.disabled = true;
+                removeGroundBtn.disabled = false;
+                inductionState = 2;
+            }
+        });
+
+        removeGroundBtn.addEventListener('click', () => {
+            if (inductionState === 2) {
+                groundConnection.classList.add('hidden');
+                inductionInfo.textContent = 'Conexión a tierra removida. La esfera ahora tiene un exceso de carga positiva. Ahora remueve la barra.';
+                removeGroundBtn.disabled = true;
+                removeRodBtn.disabled = false;
+                inductionState = 3;
+            }
+        });
+
+        removeRodBtn.addEventListener('click', () => {
+            if (inductionState === 3) {
+                inductionRod.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    inductionRod.classList.add('hidden');
+                    // Ensure only positive charges remain and redistribute them
+                    clearAllChargeParticles(inductionSphere); // Clear any lingering polarized particles
+                    addChargeParticlesRobust(inductionSphere, 12, 'positive'); // Add only positive particles to show final charge
+                    setSphereCharge(inductionSphere, 'positive'); // Set sphere to positively charged state
+                    inductionInfo.textContent = 'Barra removida. La esfera ha quedado cargada positivamente por inducción.';
+                    removeRodBtn.disabled = true;
+                    inductionState = 4;
+                }, 500);
+            }
+        });
+
+        resetInductionBtn.addEventListener('click', resetInduction);
+
+        // --- Polarization Simulation ---
+        const polarizationRod = document.getElementById('polarizationRod');
+        const polarizationWall = document.getElementById('polarizationWall');
+        const approachRodBtn = document.getElementById('approachRodBtn');
+        // MODIFICADO: Cambiado el ID del botón a 'removeRodPolarizationBtn' para claridad y evitar conflictos
+        const removeRodPolarizationBtn = document.getElementById('retractRodBtn'); // ID original era 'retractRodBtn'
+        const resetPolarizationBtn = document.getElementById('resetPolarizationBtn');
+        const polarizationInfo = document.getElementById('polarizationInfo');
+
+        let polarizationState = 0; // 0: initial, 1: rod near
+
+        /**
+         * Creates initial positive and negative charges randomly distributed within the wall element.
+         * @param {HTMLElement} wallElement - The wall DOM element.
+         * @param {number} numPositive - Number of positive charges.
+         * @param {number} numNegative - Number of negative charges.
+         */
+        function createWallCharges(wallElement, numPositive, numNegative) {
+            clearAllChargeParticles(wallElement);
+            const wallWidth = wallElement.clientWidth;
+            const wallHeight = wallElement.clientHeight;
+            const particleSize = 10;
+            const padding = 5;
+
+            const innerWidth = wallWidth - 2 * padding - particleSize;
+            const innerHeight = wallHeight - 2 * padding - particleSize;
+
+            for (let i = 0; i < numPositive; i++) {
+                const p = document.createElement('div');
+                p.classList.add('wall-charge-positive');
+                p.style.left = `${Math.random() * innerWidth + padding}px`;
+                p.style.top = `${Math.random() * innerHeight + padding}px`;
+                wallElement.appendChild(p);
+            }
+            for (let i = 0; i < numNegative; i++) {
+                const n = document.createElement('div');
+                n.classList.add('wall-charge-negative');
+                n.style.left = `${Math.random() * innerWidth + padding}px`;
+                n.style.top = `${Math.random() * innerHeight + padding}px`;
+                wallElement.appendChild(n);
+            }
+        }
+
+        /**
+         * Resets the polarization simulation to its initial state.
+         * Includes a small delay for initial particle rendering to ensure correct dimensions.
+         */
+        function resetPolarization() {
+            polarizationRod.className = 'rod hidden';
+            polarizationRod.style.transform = 'translateX(0)';
+            clearAllChargeParticles(polarizationWall);
+            // Delay adding particles to ensure element dimensions are calculated after layout
+            setTimeout(() => {
+                createWallCharges(polarizationWall, 10, 10); // Neutral (equal positive and negative)
+            }, 50); // Short delay
+
+            approachRodBtn.disabled = false;
+            removeRodPolarizationBtn.disabled = true; // Usar el ID modificado aquí
+            polarizationInfo.textContent = 'Acerca la barra cargada a la pared para observar la polarización.';
+            polarizationState = 0;
+        }
+
+        // MODIFICADO: Event listener para el botón "Remover Barra" en polarización
+        removeRodPolarizationBtn.addEventListener('click', () => {
+            if (polarizationState === 1) {
+                polarizationRod.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    polarizationRod.classList.add('hidden');
+                    // Redistribute charges back to a random neutral position
+                    const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
+                    const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
+
+                    const wallWidth = polarizationWall.clientWidth;
+                    const wallHeight = polarizationWall.clientHeight;
+                    const particleSize = 10;
+                    const padding = 5;
+                    const innerWidth = wallWidth - 2 * padding - particleSize;
+                    const innerHeight = wallHeight - 2 * padding - particleSize;
+
+
+                    positiveWallParticles.forEach(p => {
+                        const x = Math.random() * innerWidth + padding;
+                        const y = Math.random() * innerHeight + padding;
+                        p.style.left = `${x}px`;
+                        p.style.top = `${y}px`;
+                    });
+                    negativeWallParticles.forEach(n => {
+                        const x = Math.random() * innerWidth + padding;
+                        const y = Math.random() * innerHeight + padding;
+                        n.style.left = `${x}px`;
+                        n.style.top = `${y}px`;
+                    });
+
+                    // MODIFICADO: Mensaje de información
+                    polarizationInfo.textContent = 'Cuando la barra se quita se observa que la pared vuelve a su estado neutro (no polarizado).';
+                    removeRodPolarizationBtn.disabled = true; // Usar el ID modificado aquí
+                    approachRodBtn.disabled = false;
+                    polarizationState = 0;
+                }, 500);
+            }
+        });
+
+        approachRodBtn.addEventListener('click', () => {
+            if (polarizationState === 0) {
+                polarizationRod.classList.remove('hidden');
+                polarizationRod.classList.add('rod-charged-negative');
+                polarizationRod.innerHTML = '<span class="charge-indicator">-</span>';
+                polarizationRod.style.transform = 'translateX(-100px)'; // Move rod closer
+
+                setTimeout(() => {
+                    const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
+                    const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
+
+                    const wallWidth = polarizationWall.clientWidth;
+                    const wallHeight = polarizationWall.clientHeight;
+                    const particleSize = 10;
+                    const padding = 5;
+
+                    const innerHalfWidth = (wallWidth / 2) - padding - (particleSize / 2);
+                    const innerHeight = wallHeight - 2 * padding - particleSize;
+
+                    // Positive charges move closer (left side)
+                    positiveWallParticles.forEach(p => {
+                        const x = Math.random() * innerHalfWidth + padding;
+                        const y = Math.random() * innerHeight + padding;
+                        p.style.left = `${x}px`;
+                        p.style.top = `${y}px`;
+                    });
+                    // Negative charges move further away (right side)
+                    negativeWallParticles.forEach(n => {
+                        const x = Math.random() * ((wallWidth - padding - particleSize) - (wallWidth / 2 + padding)) + (wallWidth / 2 + padding);
+                        const y = Math.random() * innerHeight + padding;
+                        n.style.left = `${x}px`;
+                        n.style.top = `${y}px`;
+                    });
+
+                    polarizationInfo.textContent = 'Barra negativa cerca. La pared (dieléctrico) se ha polarizado. Las cargas positivas se atraen y se mueven hacia el lado cercano, mientras que las negativas se repelen y se mueven hacia el lado lejano.';
+                    approachRodBtn.disabled = true;
+                    removeRodPolarizationBtn.disabled = false; // Usar el ID modificado aquí
+                    polarizationState = 1;
+                }, 500);
+            }
+        });
+
+
+        resetPolarizationBtn.addEventListener('click', resetPolarization);
+
+        // Initializes all simulations and renders KaTeX once the window and its elements are fully loaded
+        window.onload = function() {
+            resetConduction();
+            resetInduction();
+            resetPolarization();
+
+            // Render all math after the DOM is fully loaded and simulations are initialized
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true}, // For block equations (display math)
+                    {left: '$', right: '$', display: false},  // For inline equations (inline math)
+                ],
+                throwOnError: false // Prevents errors from stopping rendering
+            });
+        };
+    </script>
+</body>
+</html>
