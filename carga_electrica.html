@@ -151,12 +151,11 @@
             font-size: 1.5rem;
         }
         /* Style for horizontal rod */
+        /* This class now defines the dimensions for the horizontal appearance */
         .rod-horizontal {
-            width: 60px; /* Half of 120px */
-            height: 10px; /* Half of 20px */
-            /* No transform here, handled by JS to combine with translateY */
-            border-radius: 0.5rem;
-            flex-direction: row; /* Align content horizontally when rotated */
+            width: 60px; /* Half of 120px when originally vertical */
+            height: 10px; /* Half of 20px when originally vertical */
+            flex-direction: row; /* Align internal content horizontally */
         }
         .wall {
             width: 150px;
@@ -283,7 +282,7 @@
             position: absolute;
             top: 0px; /* Start rod at the top of its container */
             transform-origin: center center; /* Ensure rotation around its center */
-            transition: transform 0.5s ease-in-out, top 0.5s ease-in-out; /* Add top to transition */
+            transition: top 0.5s ease-in-out; /* Only transition top for positioning */
             margin: 0; /* Remove default margins */
         }
 
@@ -547,7 +546,7 @@
                 <p class="text-xl font-semibold mb-4 text-gray-700">Simulación: Polarización</p>
                 <!-- Container for rod and wall, ensures relative positioning and centering -->
                 <div class="polarization-container">
-                    <div id="polarizationRod" class="rod hidden rod-horizontal"></div>
+                    <div id="polarizationRod" class="rod hidden"></div> <!-- Removed rod-horizontal initially -->
                     <div id="polarizationWall" class="wall"></div>
                 </div>
                 <div class="flex flex-col sm:flex-row mt-6 gap-4">
@@ -847,7 +846,9 @@
             const padding = 5;
 
             const innerWidth = wallWidth - 2 * padding - particleSize;
+            // Define innerHalfHeight here, as it was missing.
             const innerHalfHeight = (wallHeight / 2) - padding - (particleSize / 2);
+
 
             let targetYMinPos, targetYMaxPos;
             let targetYMinNeg, targetYMaxNeg;
@@ -1092,13 +1093,19 @@
          * Includes a small delay for initial particle rendering to ensure correct dimensions.
          */
         function resetInduction() {
-            inductionRod.classList.remove('rod-horizontal'); /* Remove horizontal class */
-            inductionRod.className = 'rod hidden';
+            inductionRod.classList.remove('rod-horizontal', 'rod-charged-negative'); // Clean classes
+            inductionRod.className = 'rod hidden'; // Ensure default rod style
             inductionRod.innerHTML = ''; // Clear indicator from rod
-            // Reset rod position above container, ensure it's horizontal
-            // Use translate for positioning, and rotate for orientation.
-            inductionRod.style.transform = 'translateY(-120px) rotate(90deg)'; 
             
+            // Set explicit dimensions for the rod (vertical default, for hiding)
+            inductionRod.style.width = '20px'; 
+            inductionRod.style.height = '120px';
+            
+            // Position off-screen
+            inductionRod.style.top = '-150px'; 
+            inductionRod.style.left = '50%';
+            inductionRod.style.transform = 'translateX(-50%)'; 
+
             inductionSphere.className = 'sphere'; // Sets neutral visual style
             inductionSphere.querySelector('.charge-indicator')?.remove(); // Clear indicator
             
@@ -1126,12 +1133,25 @@
         bringRodBtn.addEventListener('click', () => {
             if (inductionState === 0) {
                 inductionRod.classList.remove('hidden');
-                inductionRod.classList.add('rod-charged-negative', 'rod-horizontal'); /* Add horizontal class */
+                inductionRod.classList.add('rod-charged-negative', 'rod-horizontal'); /* Add horizontal dimensions class */
                 inductionRod.innerHTML = '<span class="charge-indicator">-</span>';
-                addChargeParticlesRobust(inductionRod, 5, 'negative'); // Add negative particles to the rod
-                // Move rod down to be above sphere, maintaining its horizontal rotation
-                // TranslateY moves it vertically, rotate(90deg) ensures it's horizontal
-                inductionRod.style.transform = 'translateY(40px) rotate(90deg)';
+                // Removed addChargeParticlesRobust(inductionRod, 3, 'negative'); as per user request
+                
+                // Set explicit dimensions for the horizontal appearance
+                inductionRod.style.width = '60px'; // New horizontal width
+                inductionRod.style.height = '10px'; // New horizontal height
+
+                // Calculate position to be above the sphere with a gap
+                const sphereRect = inductionSphere.getBoundingClientRect();
+                const containerRect = inductionSphere.parentElement.getBoundingClientRect();
+
+                const sphereTopRelativeToContainer = sphereRect.top - containerRect.top;
+                const rodHeightVisible = inductionRod.offsetHeight; // This should be 10px (from .rod-horizontal)
+                const desiredRodTopPosition = sphereTopRelativeToContainer - rodHeightVisible - 20; // 20px gap
+
+                inductionRod.style.top = `${desiredRodTopPosition}px`;
+                inductionRod.style.left = '50%';
+                inductionRod.style.transform = 'translateX(-50%)'; // Ensure horizontal centering, no rotation
 
                 // Simulate vertical polarization in the sphere
                 setTimeout(() => {
@@ -1148,9 +1168,7 @@
         groundSphereBtn.addEventListener('click', () => {
             if (inductionState === 1) {
                 groundConnection.classList.remove('hidden');
-                // Calculate the exact bottom position of the sphere relative to its container's top
-                // This is where the top of the ground line should start.
-                // Get the sphere's position relative to the document, then adjust for the container's top.
+                
                 const sphereRect = inductionSphere.getBoundingClientRect();
                 const containerRect = inductionSphere.parentElement.getBoundingClientRect();
                 
@@ -1181,20 +1199,26 @@
 
         removeRodBtn.addEventListener('click', () => {
             if (inductionState === 3) {
-                // Move rod back up and off-screen, maintaining its horizontal rotation
-                inductionRod.style.transform = 'translateY(-120px) rotate(90deg)'; 
-                setTimeout(() => {
-                    inductionRod.classList.add('hidden');
-                    inductionRod.innerHTML = ''; // Clear indicator from rod
-                    clearAllChargeParticles(inductionRod); // Clear particles from rod too
-                    // Ensure only positive charges remain and redistribute them
-                    clearAllChargeParticles(inductionSphere); // Clear any lingering polarized particles
-                    addChargeParticlesRobust(inductionSphere, 12, 'positive'); // Add only positive particles to show final charge
-                    setSphereCharge(inductionSphere, 'positive'); // Set sphere to positively charged state
-                    inductionInfo.textContent = 'Barra removida. La esfera ha quedado cargada positivamente por inducción.';
-                    removeRodBtn.disabled = true;
-                    inductionState = 4;
-                }, 500);
+                // Instantly hide and reset position:
+                inductionRod.classList.add('hidden');
+                inductionRod.style.top = `-150px`; // Move off-screen
+                inductionRod.innerHTML = ''; // Clear indicator from rod
+                clearAllChargeParticles(inductionRod); // Clear particles from rod too
+                inductionRod.classList.remove('rod-horizontal', 'rod-charged-negative'); // Clean classes
+                
+                // Reset to default vertical dimensions before next use
+                inductionRod.style.width = '20px';
+                inductionRod.style.height = '120px';
+                inductionRod.style.left = '50%';
+                inductionRod.style.transform = 'translateX(-50%)'; // Reset horizontal centering only
+
+                // Ensure only positive charges remain and redistribute them
+                clearAllChargeParticles(inductionSphere); // Clear any lingering polarized particles
+                addChargeParticlesRobust(inductionSphere, 12, 'positive'); // Add only positive particles to show final charge
+                setSphereCharge(inductionSphere, 'positive'); // Set sphere to positively charged state
+                inductionInfo.textContent = 'Barra removida. La esfera ha quedado cargada positivamente por inducción.';
+                removeRodBtn.disabled = true;
+                inductionState = 4;
             }
         });
 
@@ -1250,12 +1274,18 @@
          * Includes a small delay for initial particle rendering to ensure correct dimensions.
          */
         function resetPolarization() {
-            polarizationRod.classList.remove('rod-horizontal'); /* Ensure horizontal class is removed */
-            polarizationRod.className = 'rod hidden'; /* Set back to default rod, hidden */
+            polarizationRod.classList.remove('rod-horizontal', 'rod-charged-negative'); // Clean classes
+            polarizationRod.className = 'rod hidden'; // Ensure default rod style (vertical)
             polarizationRod.innerHTML = ''; // Clear indicator
-            // Reset rod to hidden off-screen above
+            clearAllChargeParticles(polarizationRod); // Clear particles from rod too
+
+            // Set explicit dimensions for horizontal rod in its hidden state
+            polarizationRod.style.width = '60px'; 
+            polarizationRod.style.height = '10px';
             polarizationRod.style.top = '-50px'; 
-            polarizationRod.style.transform = 'translateX(-50%)'; /* Keep it horizontally centered */
+            polarizationRod.style.left = '50%';
+            polarizationRod.style.transform = 'translateX(-50%)'; // Keep it horizontally centered, no rotation
+
             clearAllChargeParticles(polarizationWall);
             // Delay adding particles to ensure element dimensions are calculated after layout
             setTimeout(() => {
@@ -1275,10 +1305,14 @@
                 polarizationRod.classList.add('hidden');
                 polarizationRod.innerHTML = ''; // Clear indicator
                 clearAllChargeParticles(polarizationRod); // Clear particles from rod
-                // Reset rod to hidden off-screen above
+                // Reset rod to hidden off-screen above, with horizontal appearance
+                polarizationRod.style.width = '60px'; // Set to horizontal width
+                polarizationRod.style.height = '10px'; // Set to horizontal height
                 polarizationRod.style.top = '-50px'; 
+                polarizationRod.style.left = '50%';
                 polarizationRod.style.transform = 'translateX(-50%)'; 
-
+                polarizationRod.classList.remove('rod-horizontal', 'rod-charged-negative'); // Clean classes
+                
                 // Redistribute charges back to a random neutral position
                 const positiveWallParticles = polarizationWall.querySelectorAll('.wall-charge-positive');
                 const negativeWallParticles = polarizationWall.querySelectorAll('.wall-charge-negative');
@@ -1319,19 +1353,23 @@
                 polarizationRod.classList.remove('hidden');
                 polarizationRod.classList.add('rod-charged-negative', 'rod-horizontal'); /* Add horizontal class */
                 polarizationRod.innerHTML = '<span class="charge-indicator">-</span>';
-                // Add negative particles to the polarization rod as well
-                addChargeParticlesRobust(polarizationRod, 5, 'negative'); 
+                // Elimined addChargeParticlesRobust(polarizationRod, 3, 'negative'); as per user request
                 
+                // Explicitly set dimensions for horizontal appearance (60px wide, 10px tall)
+                polarizationRod.style.width = '60px'; // Set to horizontal width
+                polarizationRod.style.height = '10px'; // Set to horizontal height
+
                 // Position the rod above the wall, centered horizontally
                 const wallRect = polarizationWall.getBoundingClientRect();
                 const containerRect = polarizationWall.parentElement.getBoundingClientRect();
 
                 // Calculate the top position to be just above the wall's top edge
-                const rodHeight = polarizationRod.offsetHeight; // Get current height (which is 10px from CSS .rod-horizontal)
+                const rodHeight = polarizationRod.offsetHeight; // Get current height (which is 10px from CSS)
                 const wallTopRelativeToContainer = wallRect.top - containerRect.top;
                 const desiredTopPosition = wallTopRelativeToContainer - rodHeight - 10; // 10px gap
                 
                 polarizationRod.style.top = `${desiredTopPosition}px`;
+                polarizationRod.style.left = '50%';
                 polarizationRod.style.transform = 'translateX(-50%)'; // Keep it horizontally centered, no rotation applied here
 
                 setTimeout(() => {
